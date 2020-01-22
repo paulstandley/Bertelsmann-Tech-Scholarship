@@ -1,15 +1,15 @@
 import pandas as pd
 
 # TODO: Set weight1, weight2, and bias
-weight1 = 1.0
-weight2 = 2.0
-bias = -1.0
+weight1 = 0.0
+weight2 = -2.0
+bias = 1.0
 
 
-# DON'T CHANGE ANYTHING BELOW :)
-# Inputs and outputs
+# DON'T CHANGE ANYTHING BELOW
+# Inputs and outputs for not onlt the second input only
 test_inputs = [(0, 0), (0, 1), (1, 0), (1, 1)]
-correct_outputs = [False, True, True, True]
+correct_outputs = [True, False, True, False]
 outputs = []
 
 # Generate and check output
@@ -23,7 +23,7 @@ for test_input, correct_output in zip(test_inputs, correct_outputs):
 num_wrong = len([output[4] for output in outputs if output[4] == 'No'])
 output_frame = pd.DataFrame(outputs, columns=['Input 1', '  Input 2', '  Linear Combination', '  Activation Output', '  Is Correct'])
 if not num_wrong:
-    print('Nice!  You got all or correct.\n')
+    print('Nice!  You got all the not correct.\n')
 else:
-    print('You got {} or wrong.  Keep trying!\n'.format(num_wrong))
+    print('You got {} not that are wrong.  Keep trying!\n'.format(num_wrong))
 print(output_frame.to_string(index=False))

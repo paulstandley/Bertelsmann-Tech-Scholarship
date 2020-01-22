@@ -23,7 +23,7 @@ for test_input, correct_output in zip(test_inputs, correct_outputs):
 num_wrong = len([output[4] for output in outputs if output[4] == 'No'])
 output_frame = pd.DataFrame(outputs, columns=['Input 1', '  Input 2', '  Linear Combination', '  Activation Output', '  Is Correct'])
 if not num_wrong:
-    print('Nice!  You got it all correct.\n')
+    print('Nice!  You got all and correct.\n')
 else:
-    print('You got {} wrong.  Keep trying!\n'.format(num_wrong))
+    print('You got {} and that are wrong.  Keep trying!\n'.format(num_wrong))
 print(output_frame.to_string(index=False))
