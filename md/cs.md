@@ -1,5 +1,7 @@
 # Coding Softmax
 
+exponential function only returns positive values
+
 ```python
 
 import numpy as np
