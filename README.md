@@ -25,3 +25,5 @@ python and.py
 ### [Perceptrons-Logical-Operators](md/plo.md)
 
 ### [Coding-Perceptron-Algorithm](md/cpa.md)
+
+### [Coding Softmax](md/cs.md)
