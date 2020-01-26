@@ -27,3 +27,5 @@ python and.py
 ### [Coding-Perceptron-Algorithm](md/cpa.md)
 
 ### [Coding Softmax](md/cs.md)
+
+### [Cross Entropy](md/ce.md)
