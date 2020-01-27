@@ -29,3 +29,5 @@ python and.py
 ### [Coding Softmax](md/cs.md)
 
 ### [Cross Entropy](md/ce.md)
+
+### [Gradient Descent](md/gd.md)
