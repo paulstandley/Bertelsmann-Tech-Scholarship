@@ -2,6 +2,8 @@
 
 ## Implementing the Gradient Descent Algorithm
 
+[Back](../README.md)
+
 ---
 
 ### Functions that will help us plot and visualize the data
@@ -148,3 +150,5 @@ __( 3 )__ A plot of the error function. Notice how it decreases as we go through
 train(X, y, epochs, learnrate, True)
 
 ```
+
+[Back](../README.md)
