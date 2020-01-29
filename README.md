@@ -10,7 +10,35 @@
 
 ```CMD
 
+pip install opencv-python
+
+pip install jupyter
+
+pip install matplotlib
+
 pip install pandas
+
+pip install numpy
+
+pip install pillow
+
+pip install scipy
+
+pip install tqdm
+
+pip install scikit-learn
+
+pip install scikit-image
+
+pip install seaborn
+
+pip install h5py
+
+pip install ipykernel
+
+pip install bokeh
+
+pip install pickleshare
 
 cd Perceptrons-Logical-Operators
 
