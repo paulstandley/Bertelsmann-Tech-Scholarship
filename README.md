@@ -31,3 +31,5 @@ python and.py
 ### [Cross Entropy](md/ce.md)
 
 ### [Gradient Descent](md/gd.md)
+
+### [Implementing the Gradient Descent Algorithm](md/igda.md)
