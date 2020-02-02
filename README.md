@@ -61,3 +61,5 @@ python and.py
 ### [Gradient Descent](md/gd.md)
 
 ### [Implementing the Gradient Descent Algorithm](md/igda.md)
+
+### [Analyzing Student Data](md/asd.md)

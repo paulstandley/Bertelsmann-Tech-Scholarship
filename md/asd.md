@@ -1,3 +1,17 @@
+# Analyzing Student Data
+
+[Back](../README.md)
+
+## In this notebook, we predict student admissions to graduate school at UCLA based on three pieces of data
+
+__(1)__ GRE Scores (Test)
+
+__(2)__ GPA Scores (Grades)
+
+__(3)__ Class rank (1-4)
+
+```py
+
 # Importing pandas and numpy
 import pandas as pd
 import numpy as np
@@ -8,8 +22,17 @@ data = pd.read_csv('student_data.csv')
 # Printing out the first 10 rows of our data
 data[:10]
 
+```
+
+### Plotting the data
+
+First let's make a plot of our data to see how it looks. In order to have a 2D plot, let's ingore the rank
+
+```py
+
 # Importing matplotlib
 import matplotlib.pyplot as plt
+%matplotlib inline
 
 # Function to help us plot
 def plot_points(data):
@@ -25,6 +48,16 @@ def plot_points(data):
 # Plotting the points
 plot_points(data)
 plt.show()
+
+```
+
+Roughly, it looks like the students with high scores in the grades and test passed,
+
+while the ones with low scores didn't, but the data is not as nicely separable as we hoped it would.
+
+Maybe it would help to take the rank into account? Let's make 4 plots, each one for each rank
+
+```py
 
 # Separating the ranks
 data_rank1 = data[data["rank"]==1]
@@ -46,14 +79,40 @@ plot_points(data_rank4)
 plt.title("Rank 4")
 plt.show()
 
-# TODO:  Make dummy variables for rank
-one_hot_data = []
+```
+
+This looks more promising, as it seems that the lower the rank, the higher the acceptance rate.
+
+Let's use the rank as one of our inputs. In order to do this, we should one-hot encode it.
+
+### TODO: One-hot encoding the rank
+
+Use the __get_dummies__ function in pandas in order to one-hot encode the data.
+
+Hint: To drop a column, it's suggested that you use __one_hot_data.drop( )__.
+
+```py
+
+# TODO:  Make dummy variables for rank and concat existing columns
+one_hot_data = pass
 
 # TODO: Drop the previous rank column
-one_hot_data = []
+one_hot_data = pass
 
 # Print the first 10 rows of our data
 one_hot_data[:10]
+
+```
+
+### TODO: Scaling the data
+
+The next step is to scale the data. We notice that the range for grades is 1.0-4.0, whereas the range for test scores is roughly 200-800, which is much larger.
+
+This means our data is skewed, and that makes it hard for a neural network to handle.
+
+Let's fit our two features into a range of 0-1, by dividing the grades by 4.0, and the test score by 800.
+
+```py
 
 # Making a copy of our data
 processed_data = one_hot_data[:]
@@ -63,6 +122,16 @@ processed_data = one_hot_data[:]
 # Printing the first 10 rows of our procesed data
 processed_data[:10]
 
+```
+
+### Splitting the data into Training and Testing
+
+In order to test our algorithm, we'll split the data into a Training and a Testing set.
+
+The size of the testing set will be 10% of the total data.
+
+```py
+
 sample = np.random.choice(processed_data.index, size=int(len(processed_data)*0.9), replace=False)
 train_data, test_data = processed_data.iloc[sample], processed_data.drop(sample)
 
@@ -70,6 +139,14 @@ print("Number of training samples is", len(train_data))
 print("Number of testing samples is", len(test_data))
 print(train_data[:10])
 print(test_data[:10])
+
+```
+
+### Splitting the data into features and targets (labels)
+
+Now, as a final step before the training, we'll split the data into features (X) and targets (y).
+
+```py
 
 features = train_data.drop('admit', axis=1)
 targets = train_data['admit']
@@ -79,6 +156,14 @@ targets_test = test_data['admit']
 print(features[:10])
 print(targets[:10])
 
+```
+
+### Training the 2-layer Neural Network
+
+The following function trains the 2-layer neural network. First, we'll write some helper functions.
+
+```py
+
 # Activation (sigmoid) function
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -86,11 +171,23 @@ def sigmoid_prime(x):
     return sigmoid(x) * (1-sigmoid(x))
 def error_formula(y, output):
     return - y*np.log(output) - (1 - y) * np.log(1-output)
-  
+
+```
+
+### TODO: Backpropagate the error
+
+Write the error term. Remember that this is given by the equation __(y−^y)σ′(x)__
+
+```py
+
 # TODO: Write the error term formula
-def error_term_formula(y, output):
+def error_term_formula(x, y, output):
     pass
-  
+
+```
+
+```py
+
 # Neural Network hyperparameters
 epochs = 1000
 learnrate = 0.5
@@ -121,11 +218,7 @@ def train_nn(features, targets, epochs, learnrate):
             error = error_formula(y, output)
 
             # The error term
-            #   Notice we calulate f'(h) here instead of defining a separate
-            #   sigmoid_prime function. This just makes it faster because we
-            #   can re-use the result of the sigmoid function stored in
-            #   the output variable
-            error_term = error_term_formula(y, output)
+            error_term = error_term_formula(x, y, output)
 
             # The gradient descent step, the error times the gradient times the inputs
             del_w += error_term * x
@@ -150,8 +243,18 @@ def train_nn(features, targets, epochs, learnrate):
     
 weights = train_nn(features, targets, epochs, learnrate)
 
+```
+
+### Calculating the Accuracy on the Test Data
+
+```py
+
 # Calculate accuracy on test data
-tes_out = sigmoid(np.dot(features_test, weights))
-predictions = tes_out > 0.5
+test_out = sigmoid(np.dot(features_test, weights))
+predictions = test_out > 0.5
 accuracy = np.mean(predictions == targets_test)
 print("Prediction accuracy: {:.3f}".format(accuracy))
+
+```
+
+[Back](../README.md)
