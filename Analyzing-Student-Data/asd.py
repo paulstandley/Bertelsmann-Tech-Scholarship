@@ -47,10 +47,10 @@ plt.title("Rank 4")
 plt.show()
 
 # TODO:  Make dummy variables for rank
-one_hot_data = []
+one_hot_data = pd.concat([data, pd.get_dummies(data['rank'], prefix='rank')], axis=1)
 
-# TODO: Drop the previous rank column
-one_hot_data = []
+# Drop the previous rank column
+one_hot_data = one_hot_data.drop('rank', axis=1)
 
 # Print the first 10 rows of our data
 one_hot_data[:10]
@@ -61,6 +61,8 @@ processed_data = one_hot_data[:]
 # TODO: Scale the columns
 
 # Printing the first 10 rows of our procesed data
+processed_data['gre'] = processed_data['gre']/800
+processed_data['gpa'] = processed_data['gpa']/4.0
 processed_data[:10]
 
 sample = np.random.choice(processed_data.index, size=int(len(processed_data)*0.9), replace=False)
@@ -88,8 +90,8 @@ def error_formula(y, output):
     return - y*np.log(output) - (1 - y) * np.log(1-output)
   
 # TODO: Write the error term formula
-def error_term_formula(y, output):
-    pass
+def error_term_formula(x, y, output):
+    return (y - output)*sigmoid_prime(x)
   
 # Neural Network hyperparameters
 epochs = 1000
