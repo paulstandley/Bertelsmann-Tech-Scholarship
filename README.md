@@ -67,3 +67,9 @@ python and.py
 ---
 
 ## Part 5 PyTorch
+
+```BASH
+
+conda install numpy jupyter notebook
+
+```
