@@ -75,3 +75,5 @@ python and.py
 conda install numpy jupyter notebook
 
 ```
+
+### [Tensors](md/tensors.md)
