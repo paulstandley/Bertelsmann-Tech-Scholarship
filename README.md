@@ -40,6 +40,8 @@ pip install bokeh
 
 pip install pickleshare
 
+conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+
 cd Perceptrons-Logical-Operators
 
 python and.py
