@@ -463,6 +463,13 @@ model
 
 ```
 
+Now you can access layers either by integer or the name
 
+```py
+
+print(model[0])
+print(model.fc1)
+
+```
 
 [Back](../README.md)
