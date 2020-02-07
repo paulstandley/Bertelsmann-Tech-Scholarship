@@ -288,4 +288,181 @@ class Network(nn.Module):
 
 ```
 
+---
 
+## Activation functions
+
+So far we've only been looking at the softmax activation, but in general any function can be used as an activation function.
+
+The only requirement is that for a network to approximate a non-linear function, the activation functions must be non-linear.
+
+Here are a few more examples of common activation functions: Tanh (hyperbolic tangent), and ReLU (rectified linear unit).
+
+![Activation functions](../img/actfun.png)
+
+In practice, the ReLU function is used almost exclusively as the activation function for hidden layers.
+
+### Your Turn to Build a Network
+
+![deep net](../img/mlp_mnist.png)
+
+Exercise: __Create a network with 784 input units, a hidden layer with 128 units and a ReLU activation, then a hidden layer with 64 units and a ReLU activation, and finally an output layer with a softmax activation as shown above. You can use a ReLU activation with the nn.ReLU module or F.relu function__
+
+It's good practice to name your layers by their type of network, for instance 'fc' to represent a fully-connected layer. As you code your solution, use fc1, fc2, and fc3 as your layer names
+
+```py
+
+## Solution
+
+class Network(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Defining the layers, 128, 64, 10 units each
+        self.fc1 = nn.Linear(784, 128)
+        self.fc2 = nn.Linear(128, 64)
+        # Output layer, 10 units - one for each digit
+        self.fc3 = nn.Linear(64, 10)
+        
+    def forward(self, x):
+        ''' Forward pass through the network, returns the output logits '''
+        
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        x = self.fc3(x)
+        x = F.softmax(x, dim=1)
+        
+        return x
+
+model = Network()
+model
+
+```
+
+---
+
+### Initializing weights and biases
+
+he weights and such are automatically initialized for you, but it's possible to customize how they are initialized.
+
+The weights and biases are tensors attached to the layer you defined, you can get them with model.fc1.weight for instance.
+
+```py
+
+print(model.fc1.weight)
+print(model.fc1.bias)
+
+```
+
+For custom initialization, we want to modify these tensors in place. These are actually autograd Variables, so we need to get back the actual tensors with model.fc1.weight.data.
+
+Once we have the tensors, we can fill them with zeros (for biases) or random normal values.
+
+```py
+
+# Set biases to all zeros
+model.fc1.bias.data.fill_(0)
+
+```
+
+```py
+
+# sample from random normal with standard dev = 0.01
+model.fc1.weight.data.normal_(std=0.01)
+
+```
+
+---
+
+### Forward pass
+
+Now that we have a network, let's see what happens when we pass in an image.
+
+```py
+
+# Grab some data 
+dataiter = iter(trainloader)
+images, labels = dataiter.next()
+
+# Resize images into a 1D vector, new shape is (batch size, color channels, image pixels) 
+images.resize_(64, 1, 784)
+# or images.resize_(images.shape[0], 1, 784) to automatically get batch size
+
+# Forward pass through the network
+img_idx = 0
+ps = model.forward(images[img_idx,:])
+
+img = images[img_idx]
+helper.view_classify(img.view(1, 28, 28), ps)
+
+```
+
+![Forward](../img/forward.png)
+
+As you can see above, our network has basically no idea what this digit is. It's because we haven't trained it yet, all the weights are random!
+
+---
+
+### Using nn.Sequential
+
+PyTorch provides a convenient way to build networks like this where a tensor is passed sequentially through operations, nn.Sequential [(documentation)](https://pytorch.org/docs/master/nn.html#torch.nn.Sequential).
+
+Using this to build the equivalent network:
+
+```py
+
+# Hyperparameters for our network
+input_size = 784
+hidden_sizes = [128, 64]
+output_size = 10
+
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                      nn.ReLU(),
+                      nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                      nn.ReLU(),
+                      nn.Linear(hidden_sizes[1], output_size),
+                      nn.Softmax(dim=1))
+print(model)
+
+# Forward pass through the network and display output
+images, labels = next(iter(trainloader))
+images.resize_(images.shape[0], 1, 784)
+ps = model.forward(images[0,:])
+helper.view_classify(images[0].view(1, 28, 28), ps)
+
+```
+
+![nnseq](../img/nnseq.png)
+
+The operations are availble by passing in the appropriate index. For example, if you want to get first Linear operation and look at the weights, you'd use model[0].
+
+```py
+
+print(model[0])
+model[0].weight
+
+```
+
+You can also pass in an OrderedDict to name the individual layers and operations, instead of using incremental integers.
+
+Note that dictionary keys must be unique, so each operation must have a different name.
+
+```py
+
+from collections import OrderedDict
+model = nn.Sequential(OrderedDict([
+                      ('fc1', nn.Linear(input_size, hidden_sizes[0])),
+                      ('relu1', nn.ReLU()),
+                      ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
+                      ('relu2', nn.ReLU()),
+                      ('output', nn.Linear(hidden_sizes[1], output_size)),
+                      ('softmax', nn.Softmax(dim=1))]))
+model
+
+```
+
+
+
+[Back](../README.md)
