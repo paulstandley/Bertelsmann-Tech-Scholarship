@@ -227,3 +227,203 @@ With PyTorch, we run data forward through the network to calculate the loss, the
 Once we have the gradients we can make a gradient descent step.
 
 ---
+
+### Loss and Autograd together
+
+When we create a network with PyTorch, all of the parameters are initialized with requires_grad = True. This means that when we calculate the loss and call loss.backward(), the gradients for the parameters are calculated.
+
+These gradients are used to update the weights with gradient descent. Below you can see an example of calculating the gradients using a backwards pass.
+
+```py
+
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(784, 128),
+                      nn.ReLU(),
+                      nn.Linear(128, 64),
+                      nn.ReLU(),
+                      nn.Linear(64, 10),
+                      nn.LogSoftmax(dim=1))
+
+criterion = nn.NLLLoss()
+images, labels = next(iter(trainloader))
+images = images.view(images.shape[0], -1)
+
+logps = model(images)
+loss = criterion(logps, labels)
+
+print('Before backward pass: \n', model[0].weight.grad)
+
+loss.backward()
+
+print('After backward pass: \n', model[0].weight.grad)
+
+Before backward pass:
+ None
+After backward pass:
+ tensor(1.00000e-02 *
+       [[-0.0296, -0.0296, -0.0296,  ..., -0.0296, -0.0296, -0.0296],
+        [-0.0441, -0.0441, -0.0441,  ..., -0.0441, -0.0441, -0.0441],
+        [ 0.0177,  0.0177,  0.0177,  ...,  0.0177,  0.0177,  0.0177],
+        ...,
+        [ 0.4021,  0.4021,  0.4021,  ...,  0.4021,  0.4021,  0.4021],
+        [-0.1361, -0.1361, -0.1361,  ..., -0.1361, -0.1361, -0.1361],
+        [-0.0155, -0.0155, -0.0155,  ..., -0.0155, -0.0155, -0.0155]])
+
+```
+
+---
+
+### Training the network
+
+There's one last piece we need to start training, an optimizer that we'll use to update the weights with the gradients. We get these from PyTorch's [optim package](https://pytorch.org/docs/stable/optim.html). For example we can use stochastic gradient descent with optim.SGD. You can see how to define an optimizer below.
+
+```py
+
+from torch import optim
+
+# Optimizers require the parameters to optimize and a learning rate
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+```
+
+Now we know how to use all the individual parts so it's time to see how they work together. Let's consider just one learning step before looping through all the data. The general process with PyTorch:
+
+__1__ Make a forward pass through the network
+
+__2__ Use the network output to calculate the loss
+
+__3__ Perform a backward pass through the network with loss.backward() to calculate the gradients
+
+Take a step with the optimizer to update the weights
+Below I'll go through one training step and print out the weights and gradients so you can see how it changes. Note that I have a line of code __optimizer.zero_grad()__.
+
+When you do multiple backwards passes with the same parameters, the gradients are accumulated. This means that you need to zero the gradients on each training pass or you'll retain gradients from previous training batches.
+
+```py
+
+print('Initial weights - ', model[0].weight)
+
+images, labels = next(iter(trainloader))
+images.resize_(64, 784)
+
+# Clear the gradients, do this because gradients are accumulated
+optimizer.zero_grad()
+
+# Forward pass, then backward pass, then update weights
+output = model(images)
+loss = criterion(output, labels)
+loss.backward()
+print('Gradient -', model[0].weight.grad)
+
+Initial weights -  Parameter containing:
+tensor([[ 3.5691e-02,  2.1438e-02,  2.2862e-02,  ..., -1.3882e-02,
+         -2.3719e-02, -4.6573e-03],
+        [-3.2397e-03,  3.5117e-03, -1.5220e-03,  ...,  1.4400e-02,
+          2.8463e-03,  2.5381e-03],
+        [ 5.6122e-03,  4.8693e-03, -3.4507e-02,  ..., -2.8224e-02,
+         -1.2907e-02, -1.5818e-02],
+        ...,
+        [-1.4372e-02,  2.3948e-02,  2.8374e-02,  ..., -1.5817e-02,
+          3.2719e-02,  8.5537e-03],
+        [-1.1999e-02,  1.9462e-02,  1.3998e-02,  ..., -2.0170e-03,
+          1.4254e-02,  2.2238e-02],
+        [ 3.9955e-04,  4.8263e-03, -2.1819e-02,  ...,  1.2959e-02,
+         -4.4880e-03,  1.4609e-02]])
+Gradient - tensor(1.00000e-02 *
+       [[-0.2609, -0.2609, -0.2609,  ..., -0.2609, -0.2609, -0.2609],
+        [-0.0695, -0.0695, -0.0695,  ..., -0.0695, -0.0695, -0.0695],
+        [ 0.0514,  0.0514,  0.0514,  ...,  0.0514,  0.0514,  0.0514],
+        ...,
+        [ 0.0967,  0.0967,  0.0967,  ...,  0.0967,  0.0967,  0.0967],
+        [-0.1878, -0.1878, -0.1878,  ..., -0.1878, -0.1878, -0.1878],
+        [ 0.0281,  0.0281,  0.0281,  ...,  0.0281,  0.0281,  0.0281]])
+
+# Take an update step and few the new weights
+optimizer.step()
+print('Updated weights - ', model[0].weight)
+
+Updated weights -  Parameter containing:
+tensor([[ 3.5717e-02,  2.1464e-02,  2.2888e-02,  ..., -1.3856e-02,
+         -2.3693e-02, -4.6312e-03],
+        [-3.2327e-03,  3.5187e-03, -1.5150e-03,  ...,  1.4407e-02,
+          2.8533e-03,  2.5450e-03],
+        [ 5.6071e-03,  4.8642e-03, -3.4513e-02,  ..., -2.8230e-02,
+         -1.2912e-02, -1.5823e-02],
+        ...,
+        [-1.4381e-02,  2.3938e-02,  2.8365e-02,  ..., -1.5827e-02,
+          3.2709e-02,  8.5441e-03],
+        [-1.1981e-02,  1.9481e-02,  1.4016e-02,  ..., -1.9983e-03,
+          1.4272e-02,  2.2257e-02],
+        [ 3.9674e-04,  4.8235e-03, -2.1821e-02,  ...,  1.2956e-02,
+         -4.4908e-03,  1.4606e-02]])
+
+```
+
+### Training for real
+
+Now we'll put this algorithm into a loop so we can go through all the images. Some nomenclature, one pass through the entire dataset is called an epoch. So here we're going to loop through trainloader to get our training batches.
+
+For each batch, we'll doing a training pass where we calculate the loss, do a backwards pass, and update the weights.
+
+Exercise:  __Implement the training pass for our network. If you implemented it correctly, you should see the training loss drop with each epoch.__
+
+```py
+
+model = nn.Sequential(nn.Linear(784, 128),
+                      nn.ReLU(),
+                      nn.Linear(128, 64),
+                      nn.ReLU(),
+                      nn.Linear(64, 10),
+                      nn.LogSoftmax(dim=1))
+
+criterion = nn.NLLLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.003)
+
+epochs = 5
+for e in range(epochs):
+    running_loss = 0
+    for images, labels in trainloader:
+        # Flatten MNIST images into a 784 long vector
+        images = images.view(images.shape[0], -1)
+    
+        # TODO: Training pass
+        optimizer.zero_grad()
+        
+        output = model(images)
+        loss = criterion(output, labels)
+        loss.backward()
+        optimizer.step()
+        
+        running_loss += loss.item()
+    else:
+        print(f"Training loss: {running_loss/len(trainloader)}")
+
+Training loss: 1.8959971736234897
+Training loss: 0.8684300759644397
+Training loss: 0.537974218426864
+Training loss: 0.43723612014990626
+Training loss: 0.39094475933165945
+
+# With the network trained, we can check out it's predictions.
+
+%matplotlib inline
+import helper
+
+images, labels = next(iter(trainloader))
+
+img = images[0].view(1, 784)
+# Turn off gradients to speed up this part
+with torch.no_grad():
+    logps = model(img)
+
+# Output of the network are log-probabilities, need to take exponential for probabilities
+ps = torch.exp(logps)
+helper.view_classify(img.view(1, 28, 28), ps)
+
+```
+
+![cp](../img/cp.png)
+
+---
+
+[Back](../README.md)
