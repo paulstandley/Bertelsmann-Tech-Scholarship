@@ -147,3 +147,83 @@ print(loss)
 ```
 
 ### Autograd
+
+Now that we know how to calculate a loss, how do we use it to perform backpropagation? Torch provides a module, autograd, for automatically calculating the gradients of tensors.
+
+We can use it to calculate the gradients of all our parameters with respect to the loss. Autograd works by keeping track of operations performed on tensors, then going backwards through those operations, calculating gradients along the way.
+
+To make sure PyTorch keeps track of operations on a tensor and calculates the gradients, you need to set requires_grad = True on a tensor. You can do this at creation with the requires_grad keyword, or at any time with x.requires_grad_(True).
+
+You can turn off gradients for a block of code with the torch.no_grad() content:
+
+```py
+
+x = torch.zeros(1, requires_grad=True)
+>>> with torch.no_grad():
+...     y = x * 2
+>>> y.requires_grad
+False
+
+```
+
+Also, you can turn on or off gradients altogether with torch.set_grad_enabled(True|False).
+
+The gradients are computed with respect to some variable z with z.backward(). This does a backward pass through the operations that created z
+
+```py
+
+x = torch.randn(2,2, requires_grad=True)
+print(x)
+
+tensor([[ 0.7652, -1.4550],
+        [-1.2232,  0.1810]])
+
+
+y = x**2
+print(y)
+
+tensor([[ 0.5856,  2.1170],
+        [ 1.4962,  0.0328]])
+
+# Below we can see the operation that created y, a power operation PowBackward0
+
+## grad_fn shows the function that generated this variable
+print(y.grad_fn)
+
+<PowBackward0 object at 0x10b508b70>
+
+"""The autograd module keeps track of these operations and knows how to calculate the gradient for each one.
+
+In this way, it's able to calculate the gradients for a chain of operations, with respect to any one tensor.
+
+Let's reduce the tensor y to a scalar value, the mean."""
+
+z = y.mean()
+print(z)
+
+None
+
+"""To calculate the gradients, you need to run the .backward method on a Variable, z for example.
+
+This will calculate the gradient for z with respect to x
+
+∂𝑧∂𝑥=∂∂𝑥[1𝑛∑𝑖𝑛𝑥2𝑖]=𝑥2"""
+
+z.backward()
+print(x.grad)
+print(x/2)
+
+tensor([[ 0.3826, -0.7275],
+        [-0.6116,  0.0905]])
+tensor([[ 0.3826, -0.7275],
+        [-0.6116,  0.0905]])
+
+```
+
+These gradients calculations are particularly useful for neural networks. For training we need the gradients of the weights with respect to the cost.
+
+With PyTorch, we run data forward through the network to calculate the loss, then, go backwards to calculate the gradients with respect to the loss.
+
+Once we have the gradients we can make a gradient descent step.
+
+---
