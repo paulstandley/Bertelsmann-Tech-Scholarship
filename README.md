@@ -79,3 +79,5 @@ conda install numpy jupyter notebook
 ### [Tensors](md/tensors.md)
 
 ### [Neural networks with PyTorch](md/nnwpt.md)
+
+### [Training Neural Networks](md/tnn.md)
