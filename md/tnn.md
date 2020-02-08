@@ -49,3 +49,101 @@ To train the weights with gradient descent, we propagate the gradient of the los
 Each operation has some gradient between the inputs and outputs. As we send the gradients backwards, we multiply the incoming gradient with the gradient for the operation.
 
 Mathematically, this is really just calculating the gradient of the loss with respect to the weights using the chain rule.
+
+---
+
+### Losses in PyTorch
+
+Let's start by seeing how we calculate the loss with PyTorch. Through the nn module, PyTorch provides losses such as the cross-entropy loss (nn.CrossEntropyLoss).
+
+You'll usually see the loss assigned to criterion. As noted in the last part, with a classification problem such as MNIST, we're using the softmax function to predict class probabilities. With a softmax output, you want to use cross-entropy as the loss.
+
+To actually calculate the loss, you first define the criterion then pass in the output of your network and the correct labels.
+
+Something really important to note here. Looking at the documentation for [nn.CrossEntropyLoss](https://pytorch.org/docs/stable/nn.html#torch.nn.CrossEntropyLoss),
+
+This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
+
+The input is expected to contain scores for each class.
+
+This means we need to pass in the raw output of our network into the loss, not the output of the softmax function. This raw output is usually called the logits or scores.
+
+We use the logits because softmax gives you probabilities which will often be very close to zero or one but floating-point numbers can't accurately represent values near zero or one [(read more here)](https://docs.python.org/3/tutorial/floatingpoint.html). It's usually best to avoid doing calculations with probabilities, typically we use log-probabilities.
+
+```py
+
+import torch
+from torch import nn
+import torch.nn.functional as F
+from torchvision import datasets, transforms
+
+# Define a transform to normalize the data
+transform = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize((0.5,), (0.5,)),
+                              ])
+# Download and load the training data
+trainset = datasets.MNIST('~/.pytorch/MNIST_data/', download=True, train=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
+
+```
+
+```py
+
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(784, 128),
+                      nn.ReLU(),
+                      nn.Linear(128, 64),
+                      nn.ReLU(),
+                      nn.Linear(64, 10))
+
+# Define the loss
+criterion = nn.CrossEntropyLoss()
+
+# Get our data
+images, labels = next(iter(trainloader))
+# Flatten images
+images = images.view(images.shape[0], -1)
+
+# Forward pass, get our logits
+logits = model(images)
+# Calculate the loss with the logits and the labels
+loss = criterion(logits, labels)
+
+print(loss)
+
+```
+
+In my experience it's more convenient to build the model with a log-softmax output using nn.LogSoftmax or F.log_softmax [(documentation)](https://pytorch.org/docs/stable/nn.html#torch.nn.LogSoftmax). Then you can get the actual probabilites by taking the exponential torch.exp(output). With a log-softmax output, you want to use the negative log likelihood loss, nn.NLLLoss [(documentation)](https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss).
+
+Exercise: Build a model that returns the log-softmax as the output and calculate the loss using the negative log likelihood loss.
+
+```py
+
+## Solution
+
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(784, 128),
+                      nn.ReLU(),
+                      nn.Linear(128, 64),
+                      nn.ReLU(),
+                      nn.Linear(64, 10),
+                      nn.LogSoftmax(dim=1))
+
+# Define the loss
+criterion = nn.NLLLoss()
+
+# Get our data
+images, labels = next(iter(trainloader))
+# Flatten images
+images = images.view(images.shape[0], -1)
+
+# Forward pass, get our log-probabilities
+logps = model(images)
+# Calculate the loss with the logps and the labels
+loss = criterion(logps, labels)
+
+print(loss)
+
+```
+
+### Autograd
