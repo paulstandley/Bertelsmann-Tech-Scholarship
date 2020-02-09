@@ -81,3 +81,5 @@ conda install numpy jupyter notebook
 ### [Neural networks with PyTorch](md/nnwpt.md)
 
 ### [Training Neural Networks](md/tnn.md)
+
+### [Classifying Fashion-MNIST](md/cfm.md)
