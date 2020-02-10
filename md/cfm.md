@@ -1,5 +1,7 @@
 # Classifying Fashion-MNIST
 
+[Back](../README.md)
+
 Now it's your turn to build and train a neural network. You'll be using the [Fashion-MNIST dataset](https://github.com/zalandoresearch/fashion-mnist), a drop-in replacement for the MNIST dataset.
 
 MNIST is actually quite trivial with neural networks where you can easily achieve better than 97% accuracy. Fashion-MNIST is a set of 28x28 greyscale images of clothes.
@@ -72,3 +74,69 @@ class Classifier(nn.Module):
         return x
 
 ```
+
+---
+
+### Train the network
+
+First you'll want to define the [criterion](http://pytorch.org/docs/master/nn.html#loss-functions) (something like nn.CrossEntropyLoss or nn.NLLLoss) and [the optimizer](http://pytorch.org/docs/master/optim.html) (typically optim.SGD or optim.Adam).
+
+Then write the training code. Remember the training pass is a fairly straightforward process:
+
+__1__ Make a forward pass through the network to get the logits
+
+__2__ Use the logits to calculate the loss
+
+__3__ Perform a backward pass through the network with loss.backward() to calculate the gradients
+
+Take a step with the optimizer to update the weights
+By adjusting the hyperparameters (hidden units, learning rate, etc), you should be able to get the training loss below 0.4.
+
+```py
+
+# TODO: Create the network, define the criterion and optimizer
+model = Classifier()
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.003)
+
+# TODO: Train the network here
+epochs = 5
+
+for e in range(epochs):
+    running_loss = 0
+    for images, labels in trainloader:
+        log_ps = model(images)
+        loss = criterion(log_ps, labels)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        running_loss += loss.item()
+    else:
+        print(f"Training loss: {running_loss/len(trainloader)}")
+
+%matplotlib inline
+%config InlineBackend.figure_format = 'retina'
+
+import helper
+
+# Test out your network!
+
+dataiter = iter(testloader)
+images, labels = dataiter.next()
+img = images[1]
+
+# TODO: Calculate the class probabilities (softmax) for img
+ps = torch.exp(model(img))
+
+# Plot the image and probabilities
+helper.view_classify(img, ps, version='Fashion')
+
+```
+
+![clpr](../img/clpr.png)
+
+---
+
+[Back](../README.md)
