@@ -83,3 +83,5 @@ conda install numpy jupyter notebook
 ### [Training Neural Networks](md/tnn.md)
 
 ### [Classifying Fashion-MNIST](md/cfm.md)
+
+### [Inference and Validation](md/iav.md)
