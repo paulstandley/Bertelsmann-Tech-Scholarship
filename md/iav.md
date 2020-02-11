@@ -199,3 +199,189 @@ plt.legend(frameon=False
 ![tlvl](../img/tlvl.png)
 
 ---
+
+## Overfitting
+
+If we look at the training and validation losses as we train the network, we can see a phenomenon known as overfitting.
+
+The network learns the training set better and better, resulting in lower training losses.
+
+However, it starts having problems generalizing to data outside the training set leading to the validation loss increasing.
+
+The ultimate goal of any deep learning model is to make predictions on new data, so we should strive to get the lowest validation loss possible.
+
+One option is to use the version of the model with the lowest validation loss, here the one around 8-10 training epochs. This strategy is called early-stopping.
+
+In practice, you'd save the model frequently as you're training then later choose the model with the lowest validation loss.
+
+The most common method to reduce overfitting (outside of early-stopping) is dropout, where we randomly drop input units.
+
+This forces the network to share information between weights, increasing it's ability to generalize to new data.
+
+Adding dropout in PyTorch is straightforward using the [nn.Dropout](https://pytorch.org/docs/stable/nn.html#torch.nn.Dropout) module.
+
+```py
+
+class Classifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(784, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, 10)
+
+        # Dropout module with 0.2 drop probability
+        self.dropout = nn.Dropout(p=0.2)
+
+    def forward(self, x):
+        # make sure input tensor is flattened
+        x = x.view(x.shape[0], -1)
+
+        # Now with dropout
+        x = self.dropout(F.relu(self.fc1(x)))
+        x = self.dropout(F.relu(self.fc2(x)))
+        x = self.dropout(F.relu(self.fc3(x)))
+
+        # output so no dropout here
+        x = F.log_softmax(self.fc4(x), dim=1)
+
+        return x
+
+```
+
+During training we want to use dropout to prevent overfitting, but during inference we want to use the entire network.
+
+So, we need to turn off dropout during validation, testing, and whenever we're using the network to make predictions.
+
+To do this, you use model.eval().
+
+This sets the model to evaluation mode where the dropout probability is 0.
+
+You can turn dropout back on by setting the model to train mode with model.train().
+
+### In general, the pattern for the validation loop will look like this
+
+__1__ Where you turn off gradients
+
+__2__ Set the model to evaluation mode
+
+__3__ Calculate the validation loss and metric
+
+__4__ Then set the model back to train mode
+
+```py
+
+# turn off gradients
+with torch.no_grad():
+
+    # set model to evaluation mode
+    model.eval()
+
+    # validation pass here
+    for images, labels in testloader:
+        ...
+
+# set model back to train mode
+model.train()
+
+```
+
+```py
+
+model = Classifier()
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.003)
+
+epochs = 30
+steps = 0
+
+train_losses, test_losses = [], []
+for e in range(epochs):
+    running_loss = 0
+    for images, labels in trainloader:
+        
+        optimizer.zero_grad()
+        
+        log_ps = model(images)
+        loss = criterion(log_ps, labels)
+        loss.backward()
+        optimizer.step()
+        
+        running_loss += loss.item()
+        
+    else:
+        test_loss = 0
+        accuracy = 0
+        
+        # Turn off gradients for validation, saves memory and computations
+        with torch.no_grad():
+            model.eval()
+            for images, labels in testloader:
+                log_ps = model(images)
+                test_loss += criterion(log_ps, labels)
+                
+                ps = torch.exp(log_ps)
+                top_p, top_class = ps.topk(1, dim=1)
+                equals = top_class == labels.view(*top_class.shape)
+                accuracy += torch.mean(equals.type(torch.FloatTensor))
+        
+        model.train()
+        
+        train_losses.append(running_loss/len(trainloader))
+        test_losses.append(test_loss/len(testloader))
+
+        print("Epoch: {}/{}.. ".format(e+1, epochs),
+              "Training Loss: {:.3f}.. ".format(train_losses[-1]),
+              "Test Loss: {:.3f}.. ".format(test_losses[-1]),
+              "Test Accuracy: {:.3f}".format(accuracy/len(testloader)))
+
+%matplotlib inline
+%config InlineBackend.figure_format = 'retina'
+
+import matplotlib.pyplot as plt
+
+plt.plot(train_losses, label='Training loss')
+plt.plot(test_losses, label='Validation loss')
+plt.legend(frameon=False)
+
+```
+
+![dropout](../img/0tlvl.png)
+
+---
+
+## Inference
+
+Now that the model is trained, we can use it for inference.
+
+We've done this before, but now we need to remember to set the model in inference mode with model.eval().
+
+You'll also want to turn off autograd with the torch.no_grad() context.
+
+```py
+
+# Import helper module (should be in the repo)
+import helper
+
+# Test out your network!
+
+model.eval()
+
+dataiter = iter(testloader)
+images, labels = dataiter.next()
+img = images[0]
+# Convert 2D image to 1D vector
+img = img.view(1, 784)
+
+# Calculate the class probabilities (softmax) for img
+with torch.no_grad():
+    output = model.forward(img)
+
+ps = torch.exp(output)
+
+# Plot the image and probabilities
+helper.view_classify(img.view(1, 28, 28), ps, version='Fashion')
+
+```
+
+[Back](../README.md)
