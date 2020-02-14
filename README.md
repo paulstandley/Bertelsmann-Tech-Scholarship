@@ -87,3 +87,5 @@ conda install numpy jupyter notebook
 ### [Inference and Validation](md/iav.md)
 
 ### [Saving and Loading Models](md/slm.md)
+
+### [Loading Image Data](md/lid.md)
