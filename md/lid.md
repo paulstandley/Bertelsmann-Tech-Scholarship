@@ -146,3 +146,109 @@ If you loaded the data correctly, you should see something like this (your image
 ![cat](../img/cat_cropped.png)
 
 ---
+
+### Data Augmentation
+
+A common strategy for training neural networks is to introduce randomness in the input data itself.
+
+For example, you can randomly rotate, mirror, scale, and/or crop your images during training.
+
+This will help your network generalize as it's seeing the same images but in different locations, with different sizes, in different orientations, etc.
+
+To randomly rotate, scale and crop, then flip your images you would define your transforms like this:
+
+```py
+
+train_transforms = transforms.Compose([transforms.RandomRotation(30),
+                                       transforms.RandomResizedCrop(224),
+                                       transforms.RandomHorizontalFlip(),
+                                       transforms.ToTensor(),
+                                       transforms.Normalize([0.5, 0.5, 0.5], 
+                                                            [0.5, 0.5, 0.5])]))
+
+```
+
+You'll also typically want to normalize images with transforms.Normalize.
+
+You pass in a list of means and list of standard deviations, then the color channels are normalized like so
+
+```py
+
+input[channel] = (input[channel] - mean[channel]) / std[channel]
+
+```
+
+Subtracting mean centers the data around zero and dividing by std squishes the values to be between -1 and 1.
+
+Normalizing helps keep the network weights near zero which in turn makes backpropagation more stable.
+
+Without normalization, networks will tend to fail to learn.
+
+You can find a list of all the available transforms here.
+
+When you're testing however, you'll want to use images that aren't altered other than normalizing.
+
+So, for validation/test images, you'll typically just resize and crop.
+
+Exercise: Define transforms for training data and testing data below.
+
+Leave off normalization for now.
+
+```py
+
+data_dir = 'Cat_Dog_data'
+
+# TODO: Define transforms for the training data and testing data
+train_transforms = transforms.Compose([transforms.RandomRotation(30),
+                                       transforms.RandomResizedCrop(224),
+                                       transforms.RandomHorizontalFlip(),
+                                       transforms.ToTensor()]) 
+
+test_transforms = transforms.Compose([transforms.Resize(255),
+                                      transforms.CenterCrop(224),
+                                      transforms.ToTensor()])
+
+
+# Pass transforms in here, then run the next cell to see how the transforms look
+train_data = datasets.ImageFolder(data_dir + '/train', transform=train_transforms)
+test_data = datasets.ImageFolder(data_dir + '/test', transform=test_transforms)
+
+trainloader = torch.utils.data.DataLoader(train_data, batch_size=32)
+testloader = torch.utils.data.DataLoader(test_data, batch_size=32)
+
+# change this to the trainloader or testloader 
+data_iter = iter(testloader)
+
+images, labels = next(data_iter)
+fig, axes = plt.subplots(figsize=(10,4), ncols=4)
+for ii in range(4):
+    ax = axes[ii]
+    helper.imshow(images[ii], ax=ax, normalize=False)
+
+```
+
+Your transformed images should look something like this.
+
+#### Training examples:
+
+![trainning](../img/train_examples.png)
+
+#### Testing examples:
+
+![test](../img/test_examples.png)
+
+At this point you should be able to load data for training and testing.
+
+Now, you should try building a network that can classify cats vs dogs.
+
+This is quite a bit more complicated than before with the MNIST and Fashion-MNIST datasets.
+
+To be honest, you probably won't get it to work with a fully-connected network, no matter how deep.
+
+These images have three color channels and at a higher resolution (so far you've seen 28x28 images which are tiny).
+
+In the next part, I'll show you how to use a pre-trained network to build a model that can actually solve this problem.
+
+### Optional TODO: Attempt to build a network to classify cats vs dogs from this dataset
+
+[Back](../README.md)
