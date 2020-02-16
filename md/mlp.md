@@ -110,3 +110,183 @@ for x in range(width):
 ```
 
 ![md num](../img/mdnum.png)
+
+---
+
+### Define the Network [Architecture](http://pytorch.org/docs/stable/nn.html)
+
+The architecture will be responsible for seeing as input a 784-dim Tensor of pixel values for each image,
+
+and producing a Tensor of length 10 (our number of classes) that indicates the class scores for an input image.
+
+This particular example uses two hidden layers and dropout to avoid overfitting.
+
+```py
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+# define the NN architecture
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        # number of hidden nodes in each layer (512)
+        hidden_1 = 512
+        hidden_2 = 512
+        # linear layer (784 -> hidden_1)
+        self.fc1 = nn.Linear(28 * 28, hidden_1)
+        # linear layer (n_hidden -> hidden_2)
+        self.fc2 = nn.Linear(hidden_1, hidden_2)
+        # linear layer (n_hidden -> 10)
+        self.fc3 = nn.Linear(hidden_2, 10)
+        # dropout layer (p=0.2)
+        # dropout prevents overfitting of data
+        self.dropout = nn.Dropout(0.2)
+
+    def forward(self, x):
+        # flatten image input
+        x = x.view(-1, 28 * 28)
+        # add hidden layer, with relu activation function
+        x = F.relu(self.fc1(x))
+        # add dropout layer
+        x = self.dropout(x)
+        # add hidden layer, with relu activation function
+        x = F.relu(self.fc2(x))
+        # add dropout layer
+        x = self.dropout(x)
+        # add output layer
+        x = self.fc3(x)
+        return x
+
+# initialize the NN
+model = Net()
+print(model)
+
+```
+
+### Specify [Loss Function](http://pytorch.org/docs/stable/nn.html#loss-functions) and [Optimizer](http://pytorch.org/docs/stable/optim.html)
+
+It's recommended that you use cross-entropy loss for classification. If you look at the documentation (linked above),
+
+you can see that PyTorch's cross entropy function applies a softmax funtion to the output layer and then calculates the log loss.
+
+```py
+
+# specify loss function (categorical cross-entropy)
+criterion = nn.CrossEntropyLoss()
+
+# specify optimizer (stochastic gradient descent) and learning rate = 0.01
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+```
+
+### Train the Network
+
+The steps for training/learning from a batch of data are described in the comments below:
+
+__1__ Clear the gradients of all optimized variables
+
+__2__ Forward pass: compute predicted outputs by passing inputs to the model
+
+__3__ Calculate the loss
+
+__4__ Backward pass: compute gradient of the loss with respect to model parameters
+
+__5__ Perform a single optimization step (parameter update)
+
+__6__ Update average training loss
+
+The following loop trains for 50 epochs; take a look at how the values for the training loss decrease over time.
+
+We want it to decrease while also avoiding overfitting the training data.
+
+```py
+
+# number of epochs to train the model
+n_epochs = 50
+
+model.train() # prep model for training
+
+for epoch in range(n_epochs):
+    # monitor training loss
+    train_loss = 0.0
+    
+    ###################
+    # train the model #
+    ###################
+    for data, target in train_loader:
+        # clear the gradients of all optimized variables
+        optimizer.zero_grad()
+        # forward pass: compute predicted outputs by passing inputs to the model
+        output = model(data)
+        # calculate the loss
+        loss = criterion(output, target)
+        # backward pass: compute gradient of the loss with respect to model parameters
+        loss.backward()
+        # perform a single optimization step (parameter update)
+        optimizer.step()
+        # update running training loss
+        train_loss += loss.item()*data.size(0)
+             
+    # print training statistics 
+    # calculate average loss over an epoch
+    train_loss = train_loss/len(train_loader.sampler)
+
+    print('Epoch: {} \tTraining Loss: {:.6f}'.format(
+        epoch+1, 
+        train_loss
+        ))
+
+```
+
+### Test the Trained Network
+
+Finally, we test our best model on previously unseen test data and evaluate it's performance.
+
+Testing on unseen data is a good way to check that our model generalizes well.
+
+It may also be useful to be granular in this analysis and take a look at how this model performs on each class as well as looking at its overall loss and accuracy.
+
+```py
+
+# initialize lists to monitor test loss and accuracy
+test_loss = 0.0
+class_correct = list(0. for i in range(10))
+class_total = list(0. for i in range(10))
+
+model.eval() # prep model for evaluation
+
+for data, target in test_loader:
+    # forward pass: compute predicted outputs by passing inputs to the model
+    output = model(data)
+    # calculate the loss
+    loss = criterion(output, target)
+    # update test loss 
+    test_loss += loss.item()*data.size(0)
+    # convert output probabilities to predicted class
+    _, pred = torch.max(output, 1)
+    # compare predictions to true label
+    correct = np.squeeze(pred.eq(target.data.view_as(pred)))
+    # calculate test accuracy for each object class
+    for i in range(len(target)):
+        label = target.data[i]
+        class_correct[label] += correct[i].item()
+        class_total[label] += 1
+
+# calculate and print avg test loss
+test_loss = test_loss/len(test_loader.sampler)
+print('Test Loss: {:.6f}\n'.format(test_loss))
+
+for i in range(10):
+    if class_total[i] > 0:
+        print('Test Accuracy of %5s: %2d%% (%2d/%2d)' % (
+            str(i), 100 * class_correct[i] / class_total[i],
+            np.sum(class_correct[i]), np.sum(class_total[i])))
+    else:
+        print('Test Accuracy of %5s: N/A (no training examples)' % (classes[i]))
+
+print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
+    100. * np.sum(class_correct) / np.sum(class_total),
+    np.sum(class_correct), np.sum(class_total)))
+
+```
