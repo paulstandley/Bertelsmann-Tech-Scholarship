@@ -91,3 +91,5 @@ conda install numpy jupyter notebook
 ### [Loading Image Data](md/lid.md)
 
 ### [Transfer Learning](md/tl.md)
+
+### [Multi-Layer Perceptron, MNIST](md/mlp.md)
