@@ -92,4 +92,10 @@ conda install numpy jupyter notebook
 
 ### [Transfer Learning](md/tl.md)
 
+---
+
+## Part 6 Convolutional Neural Networks
+
 ### [Multi-Layer Perceptron, MNIST](md/mlp.md)
+
+### [Convolutional Neural Networks](md/cnn.md)
