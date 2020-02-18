@@ -29,9 +29,9 @@ else:
 
 ```
 
-### Load the Data¶
+### Load the Data
 
-Downloading may take a minute. 
+Downloading may take a minute.
 
 We load in the training and test data, split the training data into a training and validation set, then create DataLoaders for each of these sets of data.
 
@@ -141,5 +141,121 @@ for idx in np.arange(rgb_img.shape[0]):
 
 ```
 
-![one](../img/alp.png)
+![one](../img/0truck.png)
 
+---
+
+### Define the Network [Architecture](http://pytorch.org/docs/stable/nn.html)
+
+Define a CNN architecture. Instead of an MLP, which used linear, fully-connected layers, you'll use the following:
+
+__1__ [Convolutional layers](https://pytorch.org/docs/stable/nn.html#conv2d), which can be thought of as stack of filtered images.
+
+__2__ [Maxpooling layers](https://pytorch.org/docs/stable/nn.html#maxpool2d), which reduce the x-y size of an input, keeping only the most active pixels from the previous layer.
+
+__3__ The usual Linear + Dropout layers to avoid overfitting and produce a 10-dim output.
+
+A network with 2 convolutional layers is shown in the image below and in the code,
+
+and you've been given starter code with one convolutional and one maxpooling layer.v
+
+![2lc](../img/2lc.png)
+
+### TODO: Define a model with multiple convolutional layers, and define the feedforward metwork behavior
+
+The more convolutional layers you include, the more complex patterns in color and shape a model can detect.
+
+It's suggested that your final model include 2 or 3 convolutional layers as well as linear layers + dropout in between to avoid overfitting.
+
+It's good practice to look at existing research and implementations of related models as a starting point for defining your own models.
+
+You may find it useful to look at this [PyTorch classification](https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py) example or this, more complex [Keras example](https://github.com/keras-team/keras/blob/master/examples/cifar10_cnn.py) to help decide on a final structure.
+
+### Output volume for a convolutional layer
+
+To compute the output size of a given convolutional layer we can perform the following calculation [(taken from Stanford's cs231n course)](http://cs231n.github.io/convolutional-networks/#layers):
+
+We can compute the spatial size of the output volume as a function of the input volume size (W),
+
+the kernel/filter size (F), the stride with which they are applied (S),and the amount of zero padding used (P) on the border.
+
+The correct formula for calculating how many neurons define the output_W is given by __(W−F+2P)/S+1__.
+
+For example for a 7x7 input and a 3x3 filter with stride 1 and pad 0 we would get a 5x5 output.
+
+With stride 2 we would get a 3x3 output.
+
+```py
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+# define the CNN architecture
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        # convolutional layer (sees 32x32x3 image tensor)
+        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
+        # convolutional layer (sees 16x16x16 tensor)
+        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        # convolutional layer (sees 8x8x32 tensor)
+        self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
+        # max pooling layer
+        self.pool = nn.MaxPool2d(2, 2)
+        # linear layer (64 * 4 * 4 -> 500)
+        self.fc1 = nn.Linear(64 * 4 * 4, 500)
+        # linear layer (500 -> 10)
+        self.fc2 = nn.Linear(500, 10)
+        # dropout layer (p=0.25)
+        self.dropout = nn.Dropout(0.25)
+
+    def forward(self, x):
+        # add sequence of convolutional and max pooling layers
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
+        # flatten image input
+        x = x.view(-1, 64 * 4 * 4)
+        # add dropout layer
+        x = self.dropout(x)
+        # add 1st hidden layer, with relu activation function
+        x = F.relu(self.fc1(x))
+        # add dropout layer
+        x = self.dropout(x)
+        # add 2nd hidden layer, with relu activation function
+        x = self.fc2(x)
+        return x
+
+# create a complete CNN
+model = Net()
+print(model)
+
+# move tensors to GPU if CUDA is available
+if train_on_gpu:
+    model.cuda()
+
+```
+
+### Specify [Loss Function](http://pytorch.org/docs/stable/nn.html#loss-functions) and [Optimizer](http://pytorch.org/docs/stable/optim.html)
+
+Decide on a loss and optimization function that is best suited for this classification task.
+
+The linked code examples from above, may be a good starting point; [this PyTorch classification example](https://github.com/pytorch/tutorials/blob/master/beginner_source/blitz/cifar10_tutorial.py) or [this, more complex Keras example](https://github.com/keras-team/keras/blob/master/examples/cifar10_cnn.py).
+
+Pay close attention to the value for learning rate as this value determines how your model converges to a small error.
+
+__TODO: Define the loss and optimizer and see how these choices change the loss over time__.
+
+```py
+
+import torch.optim as optim
+
+# specify loss function (categorical cross-entropy)
+criterion = nn.CrossEntropyLoss()
+
+# specify optimizer
+optimizer = optim.SGD(model.parameters(), lr=0.01)
+
+```
+
+---
