@@ -99,3 +99,5 @@ conda install numpy jupyter notebook
 ### [Multi-Layer Perceptron, MNIST](md/mlp.md)
 
 ### [Convolutional Neural Networks](md/cnn.md)
+
+### [Convolutional Layer](md/cl.md)
