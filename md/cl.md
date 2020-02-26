@@ -189,3 +189,25 @@ conv_layer, activated_layer = model(gray_img_tensor)
 viz_layer(conv_layer)
 
 ```
+
+### ReLu activation
+
+In this model, we've used an activation function that scales the output of the convolutional layer.
+
+We've chose a ReLu function to do this, and this function simply turns all negative pixel values in 0's (black).
+
+See the equation pictured below for input pixel values, __x__.
+
+![rl](../img/relu_ex.png)
+
+```py
+
+# after a ReLu is applied
+# visualize the output of an activated conv layer
+viz_layer(activated_layer)
+
+```
+
+---
+
+[Back](../README.md)
